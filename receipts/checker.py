@@ -8,9 +8,9 @@ from .model import CENT, Problem, Receipt
 
 def check(receipt: Receipt) -> list[Problem]:
     problems: list[Problem] = []
-    discount = abs(receipt.discount or Decimal("0"))      # spec 6: either sign means the same amount off
-    tax = receipt.tax or Decimal("0")
-    items = sum((i.line_total for i in receipt.items), Decimal("0"))
+    discount = abs(receipt.discount or Decimal(0))      # spec 6: either sign means the same amount off
+    tax = receipt.tax or Decimal(0)
+    items = sum((i.line_total for i in receipt.items), Decimal(0))
     item_tolerance = CENT * len(receipt.items)            # spec 11: a cent per item for unit-price rounding
 
     if receipt.subtotal is not None:

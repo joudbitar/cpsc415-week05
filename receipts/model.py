@@ -31,7 +31,7 @@ class Receipt:
     subtotal: Decimal | None = None
     discount: Decimal | None = None
     tax: Decimal | None = None
-    total: Decimal = Decimal("0")
+    total: Decimal = Decimal(0)
 
     def to_json(self) -> dict:
         def num(d):

@@ -62,13 +62,13 @@ def test_negative_discount_becomes_a_positive_amount():
 def test_line_total_only_gives_unit_price():
     r = parse_reply('{"merchant": "Bake Sale", "date": null,'
                     ' "items": [{"name": "Cookies", "quantity": 3, "line_total": 3.00}], "total": 3.00}')
-    assert r.items[0].quantity == D("3")
+    assert r.items[0].quantity == D(3)
     assert r.items[0].unit_price == D("1.00")
 
 
 def test_quantity_defaults_to_one():
     r = parse_reply('{"merchant": "X", "date": null, "items": [{"name": "A", "unit_price": 2}], "total": 2}')
-    assert r.items[0].quantity == D("1")
+    assert r.items[0].quantity == D(1)
 
 
 @pytest.mark.parametrize("date", ["Oct 3", "10-03", "--10-03", "2026-13-40", "unknown"])

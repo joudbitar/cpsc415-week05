@@ -1,0 +1,2 @@
+# guard.py is the course copy of the hook; it is not ours to restyle.
+extend-exclude = [".claude"]
