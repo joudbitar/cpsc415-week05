@@ -31,7 +31,7 @@
 5. Money values are parsed to cents (`Decimal`, rounded to 0.01). Strings such as `"$4.36"` are accepted. A missing subtotal, discount or tax is `null`. A missing total is a failed read.
 6. A discount is stored as a positive amount, whatever sign the model or the receipt used.
 7. Each item has a name, a quantity (default 1) and a unit price. If the model gives only a line total, the unit price is the line total divided by the quantity.
-8. The date is ISO `YYYY-MM-DD`. When the year is not printed on the receipt, the date is `null`. The prompt says so, and the parser also turns any date the model did not give as a full ISO date into `null`.
+8. The date is ISO `YYYY-MM-DD`. A two-digit year counts as printed (`10/04/26` is 2026-10-04). When no year is printed at all (`Oct 3`), the date is `null`. The prompt says so, and the parser also turns any date the model did not give as a full ISO date into `null`.
 9. The checker compares the sum of quantity times unit price over all items with the subtotal. When there is no subtotal, it compares the items with the total, minus tax, plus discount.
 10. The checker compares subtotal minus discount plus tax with the total.
 11. A receipt whose numbers do not add up is reported with the check's name, the expected value, the printed value and the difference. Tolerance is one cent per item for rounding of unit prices (for example 3 × 0.89 printed as 2.67).

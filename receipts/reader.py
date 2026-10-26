@@ -88,7 +88,8 @@ PROMPT = """Read this receipt and reply with one JSON object and nothing else:
  "subtotal": number or null, "discount": number or null, "tax": number or null, "total": number}
 Rules:
 - merchant is the store name as printed at the top.
-- date: only if the year is printed on the receipt. If the year is not printed, use null. Never guess a year.
+- date: only if a year is printed on the receipt. A two-digit year counts (03/15/25 is 2025-03-15).
+  If no year is printed at all (for example "Oct 3"), use null. Never guess a year.
 - one entry per item line; unit_price is the price of ONE unit (for "2 x Blue book @ 1.25 ea  2.50" the
   quantity is 2 and the unit_price is 1.25).
 - discount is the amount taken off, as a positive number.
