@@ -79,4 +79,29 @@ It then asked me to choose between restoring the key and treating 13.96 as corre
 
 ## My own receipts
 
-Pending: needs two photographs of real receipts in `my-receipts/` with a hand-written `expected.json`. Run with `RECEIPT_DIR=my-receipts python3 eval.py`, once per model.
+Four photos in `my-receipts/`, taken with my phone: an Albert Heijn in Maastricht (March 2024, Dutch, comma decimals), the Citgo on New Britain Ave (crumpled, my thumb over the total), and two long Target receipts from move-in day (September 1, 2025). I cropped off everything below the totals, which removed a payment token, card and auth digits, and a survey login. I also resized them to 1600 px and dropped the EXIF data. The Albert Heijn date was printed in the part I cut off and the Citgo receipt prints no date, so both are `null` in `my-receipts/expected.json`.
+
+Two runs per model, `RECEIPT_DIR=my-receipts python3 eval.py`:
+
+| Receipt | minimax run 1 | minimax run 2 | mimo run 1 | mimo run 2 |
+|---|---|---|---|---|
+| albert-heijn | all pass | all pass | all pass | all pass |
+| hartford-citgo | merchant `CITGO` | all pass | merchant `145 HARTFORD CITGO` | merchant `145 HARTFORD CITGO` |
+| target-1 | merchant `Bishops Corner` | merchant `Bishops Corner` | merchant `Bishops Corner` | merchant `Bishops Corner`; **checker: off by +16.00** |
+| target-2 | all pass | merchant `Bishops Corner`; **checker: off by +0.80** | merchant `Bishops Corner` | merchant `Bishops Corner`; **checker: off by +0.80** |
+| fully correct | 2/4 | 2/4 | 1/4 | 1/4 |
+| tokens in / out | 13570 / 2921 | 13570 / 6062 | 9940 / 1131 | 9940 / 1105 |
+
+Every date, item count and total was right on both models, including 14 items on target-1, the Dutch `8,67`, and the Citgo total half under my thumb. The failures are of two kinds.
+
+**Merchant: spec ambiguity.** Target prints its name only as the bullseye logo, so both models took the first printed text, the store location "Bishops Corner". The Citgo prints its store number into the name ("145 HARTFORD CITGO"). My matcher wants the same set of words, so "145 Hartford Citgo" fails against "Hartford Citgo". The spec says "the store name as printed at the top" and does not say what to do with a logo or a store number. A fairer rule would match when every word of the expected name appears in the read name. That would fix the Citgo but not Target, where the right word does not appear at all.
+
+**Savings read as a discount: model misread, caught by the checker.** Target prints "YOUR TOTAL SAVINGS THIS TRIP: $16.00" (and $0.80) at the bottom. That amount is already taken out of the item prices, so it is not a discount on the subtotal. In three reads a model put it in `discount`, and the checker reported the total off by exactly that amount:
+
+```
+subtotal - discount + tax vs total: parts add up to 189.48, receipt says 205.48 (off by +16.00)
+```
+
+The total itself was still read correctly, so without the checker this mistake would be invisible in the eval's total column. The checker was the only thing that caught it.
+
+The images are bigger than the course PNGs, so they cost about three times the input tokens (2,260 to 3,668 per receipt). minimax's output varied a lot between runs on the same image (2,921 against 6,062 tokens), which is its hidden reasoning.

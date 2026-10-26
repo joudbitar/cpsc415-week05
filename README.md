@@ -50,7 +50,7 @@ I changed receipt-01's total in `images/expected.json` to 13.96 by hand and told
 
 ## My own receipts
 
-Not done yet. Two photos and their expected values go in `my-receipts/`, then `RECEIPT_DIR=my-receipts .venv/bin/python eval.py` with each model.
+Four phone photos in `my-receipts/`: an Albert Heijn in Maastricht, a Citgo in Hartford, and two Target receipts. I cropped off the payment and survey details. Both models got every date, item count and total right, two runs each, including the Dutch comma decimals and a total half covered by my thumb. They failed on the merchant: Target prints its name only as a logo, so both models wrote the store location "Bishops Corner", and the Citgo came back with its store number as "145 HARTFORD CITGO". The checker caught the other mistake. In three reads a model treated Target's "total savings this trip" line as a discount, and the checker reported the total off by exactly $16.00 or $0.80 even though the total field itself was correct. Details in `CHECKS.md`.
 
 ## One line I can explain
 
