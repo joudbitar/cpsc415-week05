@@ -4,14 +4,14 @@
      Graded: does it reflect how the team actually works? -->
 
 ## What this repository is
-One paragraph. Link to the current `spec.md`.
+A command-line receipt reader: a vision model turns a receipt photo into JSON, and a plain-code checker reports when the numbers do not add up. See [`spec.md`](spec.md).
 
 ## Commands
 ```
-# build
-# test
-# run
-# lint
+.venv/bin/pytest -m "not needs_key"            # no-key tests
+.venv/bin/pytest                               # all tests (eval needs OPENROUTER_API_KEY)
+.venv/bin/python receipt.py images/receipt-01.png
+.venv/bin/ruff check .
 ```
 
 ## Conventions
@@ -38,3 +38,4 @@ For an introductory lab, follow its explicitly assigned stages; the full chain b
 
 ## Common mistakes
 Things the agent got wrong before and must not repeat. Add to this list as they happen.
+- An example date in the prompt that matched a real receipt (10/04/26) leaked into another receipt's answer. Prompt examples use values that appear on no receipt.

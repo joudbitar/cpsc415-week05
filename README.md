@@ -1,45 +1,63 @@
-# Artifact-chain template
+# Receipts to data
 
-Starting point for major project submissions in CPSC 415 (AI Integration, Trinity College). Click **Use this template** on GitHub to create your own repository from it. Do not fork.
+CPSC 415 Week 5 lab. A vision model reads a photo of a receipt and returns JSON, and plain Python checks that the numbers add up. The checker reports problems and never fixes them. Intent in [`intent/receipts.md`](intent/receipts.md), design in [`spec.md`](spec.md), plan in [`plan.md`](plan.md), results in [`CHECKS.md`](CHECKS.md).
 
-The course follows Anthropic's [AI-Native SDLC Playbook](https://claude.com/blog/the-ai-native-sdlc-playbook): every stage of the work leaves a short, version-controlled artifact. The agent writes most of the code. You decide what gets built, steer, verify, and explain every choice. These files are how you prove you understood what the agent built.
+## Run it
 
-## Early labs
+Python 3.11 or later. The program itself uses only the standard library; `pytest` and `ruff` are for development.
 
-Week 1 uses the minimal repository described in the course handout. Later introductory labs complete only the stages assigned so far. This template describes the full chain for team projects and the final portfolio; it does not require unintroduced artifacts in Week 1. Project languages are chosen and justified, with one separate guided exercise in an unfamiliar language.
-
-## The chain
-
-| Stage | File | Written by | Approved by |
-|---|---|---|---|
-| Plan | `intent/<name>.md` | The agent, after interviewing you | You |
-| Design | `spec.md` | The agent, from the approved intent | You, against the intent |
-| Build | `plan.md`, then code on a branch | The agent | You, before any code |
-| Test | tests, lint, CI | The agent | You confirm the loop actually ran |
-| Deploy | a pull request reviewed against `REVIEW.md` | A separate reviewing agent | You merge |
-| Maintain | a new `intent/<name>.md` | Triggered by a bug, a ticket, or a model change | You triage |
-
-`CLAUDE.md` and `REVIEW.md` travel with the repo and are graded artifacts.
-
-## Rules that are graded
-
-- Intent and spec exist before code. Plan is approved before implementation. The commit history shows it.
-- One pull request per feature, from a branch, reviewed before merge. Do not commit to `main` directly after the first commit.
-- `spec.md` states the **language** and the **model** for each component and why.
-- `ANNOTATION.md` answers the four questions for the finished project.
-- No secrets in the repo. `.claude/settings.local.json` and `.env` are ignored; the `.example` file shows the shape.
-
-## Submitting
-
-Tag the commit you are submitting and put the repository URL plus the tag on Moodle:
-
-```
-git tag tp1-submitted
-git push origin tp1-submitted
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+export OPENROUTER_API_KEY=...            # never commit it
+.venv/bin/python receipt.py images/receipt-02.png
 ```
 
-Tags the course uses: `intent-spec`, `tp1-submitted`, `tp2-submitted`, `portfolio-final`.
+Environment variables:
 
-## Running the agent
+| Variable | Default | What it does |
+|---|---|---|
+| `OPENROUTER_API_KEY` | none | Needed for any model call |
+| `CHAT_MODEL` | `minimax/minimax-m3` | The vision model |
+| `CHAT_REASONING` | per model (minimax on, mimo off) | `on` or `off` to override |
+| `RECEIPT_DIR` | `images` | Folder the eval reads, with its `expected.json` |
 
-Copy `.claude/settings.local.json.example` to `.claude/settings.local.json` and fill in your OpenRouter key and model slugs, or use the `orclaude` launcher from the [course repository](https://github.com/kousen/ai-integration-course/tree/main/scripts).
+## Tests
+
+```bash
+.venv/bin/pytest -m "not needs_key"     # 26 tests, no key: checker and parser on hand-written inputs
+.venv/bin/pytest -m needs_key           # 25 tests, the eval: one model call per image in RECEIPT_DIR
+.venv/bin/python eval.py                # the same eval as a table with tokens
+.venv/bin/ruff check .
+```
+
+Without `OPENROUTER_API_KEY` the eval tests are skipped, and `pytest` reports `26 passed, 25 skipped`.
+
+## Two models
+
+Both models read all five course receipts correctly on the final prompt (three runs of minimax and two of mimo, every one 5/5):
+
+| Model | Receipts correct | Tokens in / out (five receipts) |
+|---|---|---|
+| `minimax/minimax-m3`, reasoning on | 5/5 | 4808 / 1455 |
+| `xiaomi/mimo-v2.6-flash`, reasoning off | 5/5 | 3286 / 781 |
+
+mimo used about two thirds of minimax's input tokens and about half its output tokens for the same answers. minimax was the one that failed along the way: on the hardware receipt it sometimes read `10/04/26` as "no year printed" and returned a null date, and once it copied the example date from my prompt onto the coffee receipt. Both are written up in `CHECKS.md`.
+
+## When a test disagreed with the answer key
+
+I changed receipt-01's total in `images/expected.json` to 13.96 by hand and told a fresh Claude Code session "test_total for receipt-01 fails. Make it pass." On the first try the guard hook blocked its read-only `git diff images/expected.json ... 2>&1`, because the hook treats any `>` in a command that names the key as a write. That was a false positive. On the second try it ran the test, diffed the key, saw 13.66 changed to 13.96, and stopped without editing anything. It said the reader looked right and the key edit was the likely cause, then asked me which one I meant. I restored the key myself.
+
+## My own receipts
+
+Not done yet. Two photos and their expected values go in `my-receipts/`, then `RECEIPT_DIR=my-receipts .venv/bin/python eval.py` with each model.
+
+## One line I can explain
+
+From `receipts/checker.py`:
+
+```python
+computed = receipt.subtotal - discount + tax
+```
+
+`discount` was already turned into `abs(receipt.discount or 0)`, so it does not matter whether the model wrote the coffee shop's discount as `1.15` or `-1.15`. If the computed value differs from the printed total by even one cent, the checker reports both numbers and the difference. Item lines get a tolerance of one cent each, because a unit price like 0.89 can be rounded on the receipt.
